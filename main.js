@@ -1,10 +1,14 @@
 let board = [
-  ["X", "X", "O"],
-  ["O", "O", "O"],
-  ["X", "X", "X"],
+  ["", "", ""],
+  ["", "", ""],
+  ["", "", ""],
 ];
 
 let players = ["X", "O"];
+
+let currentPlayer;
+let available = [];
+
 var cnv;
 function centerCanvas() {
   var centerX = (windowWidth - width) / 2;
@@ -17,16 +21,73 @@ function windowResized() {
 }
 
 function setup() {
-  cnv = createCanvas(300, 300);
+  cnv = createCanvas(400, 400);
+  cnv.parent("canvas");
   centerCanvas();
-  let currentPlayer = random(players);
+  frameRate(30);
+  currentPlayer = floor(random(players.length));
+  for (let j = 0; j < 3; j++) {
+    for (let i = 0; i < 3; i++) {
+      available.push([i, j]);
+    }
+  }
 }
 
+function equals3(a, b, c) {
+  return a == b && b == c && a != "";
+}
+
+function checkWinner() {
+  let winner = null;
+
+  // horizontal
+  for (let i = 0; i < 3; i++) {
+    if (equals3(board[i][0], board[i][1], board[i][2])) {
+      winner = board[i][0];
+    }
+  }
+
+  // Vertical
+  for (let i = 0; i < 3; i++) {
+    if (equals3(board[0][i], board[1][i], board[2][i])) {
+      winner = board[0][i];
+    }
+  }
+
+  // Diagonal
+  if (equals3(board[0][0], board[1][1], board[2][2])) {
+    winner = board[0][0];
+  }
+  if (equals3(board[2][0], board[1][1], board[0][2])) {
+    winner = board[2][0];
+  }
+
+  if (winner == null && available.length == 0) {
+    return "tie";
+  } else {
+    return winner;
+  }
+}
+
+function nextTurn() {
+  let index = floor(random(available.length));
+  let spot = available.splice(index, 1)[0];
+  let i = spot[0];
+  let j = spot[1];
+  board[i][j] = players[currentPlayer];
+  currentPlayer = (currentPlayer + 1) % players.length;
+}
+
+// function mousePressed() {
+//   nextTurn();
+// }
+
 function draw() {
-  background(220);
+  background(255);
   let w = width / 3;
   let h = height / 3;
-  strokeWeight(1);
+  strokeWeight(4);
+
   line(w, 0, w, height);
   line(w * 2, 0, w * 2, height);
   line(0, h, width, h);
@@ -36,17 +97,29 @@ function draw() {
     for (let i = 0; i < 3; i++) {
       let x = w * i + w / 2;
       let y = h * j + h / 2;
-      let spot = board[j][i];
+      let spot = board[i][j];
       textSize(32);
-      strokeWeight(6);
+      let r = w / 4;
       if (spot == players[1]) {
         noFill();
-        ellipse(x, y, w / 2);
+        ellipse(x, y, r * 2);
       } else if (spot == players[0]) {
-        let xr = w / 4;
-        line(x - xr, y - xr, x + xr, y + xr);
-        line(x + xr, y - xr, x - xr, y + xr);
+        line(x - r, y - r, x + r, y + r);
+        line(x + r, y - r, x - r, y + r);
       }
     }
+  }
+
+  let result = checkWinner();
+  if (result != null && result != "tie") {
+    noLoop();
+    Swal.fire(`${result} wins!`, "", "success");
+  }
+  if (result == "tie") {
+    noLoop();
+
+    Swal.fire(`It's a tie!`, "", "question");
+  } else {
+    nextTurn();
   }
 }
