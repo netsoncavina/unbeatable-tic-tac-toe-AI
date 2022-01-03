@@ -4,10 +4,12 @@ let board = [
   ["", "", ""],
 ];
 
-let players = ["X", "O"];
+let w; // = width / 3;
+let h; // = height / 3;
 
-let currentPlayer;
-let available = [];
+let ai = "X";
+let human = "O";
+let currentPlayer = human;
 
 var cnv;
 function centerCanvas() {
@@ -21,16 +23,11 @@ function windowResized() {
 }
 
 function setup() {
-  cnv = createCanvas(400, 400);
-  cnv.parent("canvas");
+  cnv = createCanvas(windowWidth * 0.75, windowHeight * 0.75);
+  w = width / 3;
+  h = height / 3;
   centerCanvas();
-  frameRate(30);
-  currentPlayer = floor(random(players.length));
-  for (let j = 0; j < 3; j++) {
-    for (let i = 0; i < 3; i++) {
-      available.push([i, j]);
-    }
-  }
+  bestMove();
 }
 
 function equals3(a, b, c) {
@@ -62,30 +59,38 @@ function checkWinner() {
     winner = board[2][0];
   }
 
-  if (winner == null && available.length == 0) {
+  let openSpots = 0;
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      if (board[i][j] == "") {
+        openSpots++;
+      }
+    }
+  }
+
+  if (winner == null && openSpots == 0) {
     return "tie";
   } else {
     return winner;
   }
 }
 
-function nextTurn() {
-  let index = floor(random(available.length));
-  let spot = available.splice(index, 1)[0];
-  let i = spot[0];
-  let j = spot[1];
-  board[i][j] = players[currentPlayer];
-  currentPlayer = (currentPlayer + 1) % players.length;
+function mousePressed() {
+  if (currentPlayer == human) {
+    // Human make turn
+    let i = floor(mouseX / w);
+    let j = floor(mouseY / h);
+    // If valid turn
+    if (board[i][j] == "") {
+      board[i][j] = human;
+      currentPlayer = ai;
+      bestMove();
+    }
+  }
 }
-
-// function mousePressed() {
-//   nextTurn();
-// }
 
 function draw() {
   background(255);
-  let w = width / 3;
-  let h = height / 3;
   strokeWeight(4);
 
   line(w, 0, w, height);
@@ -100,10 +105,10 @@ function draw() {
       let spot = board[i][j];
       textSize(32);
       let r = w / 4;
-      if (spot == players[1]) {
+      if (spot == human) {
         noFill();
         ellipse(x, y, r * 2);
-      } else if (spot == players[0]) {
+      } else if (spot == ai) {
         line(x - r, y - r, x + r, y + r);
         line(x + r, y - r, x - r, y + r);
       }
@@ -116,10 +121,8 @@ function draw() {
     Swal.fire(`${result} wins!`, "", "success");
   }
   if (result == "tie") {
-    noLoop();
+    // noLoop();
 
     Swal.fire(`It's a tie!`, "", "question");
-  } else {
-    nextTurn();
   }
 }
